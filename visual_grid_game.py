@@ -60,7 +60,7 @@ class VisualGridHuntGame:
             'collision': self.collision,
             'score': self.score,
             'remaining_food': len(self.food_positions),
-            'smells_toxin': tuple(self.agent_pos) in self.toxic_traps  # STEP 2.2: NEW SENSOR
+            'smells_toxin': tuple(self.agent_pos) in self.toxic_traps, # STEP 2.2: NEW SENSOR
             'remaining_food': len(self.food_positions)
         }
 
