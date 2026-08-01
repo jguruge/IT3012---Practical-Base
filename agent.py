@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 class SimpleReflexAgent:
     def sense_and_act(self, percept):
         if percept.get('food_here'):
@@ -10,11 +12,16 @@ class SimpleReflexAgent:
 
 class ModelBasedAgent:
     def __init__(self):
-        self.visited_cells = set()
+        self.visit_counts = defaultdict(int)
         self.known_walls = set()
         self.current_pos = (0, 0)
         self.facing = 'Up'
         self.last_action = None
+
+    def get_visit_count(self, cell):
+        if cell in self.known_walls:
+            return 999999
+        return self.visit_counts[cell]
 
     def sense_and_act(self, percept):
         dirs = ['Up', 'Right', 'Down', 'Left']
@@ -35,7 +42,7 @@ class ModelBasedAgent:
             dx, dy = dir_offsets[self.facing]
             self.current_pos = (self.current_pos[0] + dx, self.current_pos[1] + dy)
 
-        self.visited_cells.add(self.current_pos)
+        self.visit_counts[self.current_pos] += 1
 
         idx = dirs.index(self.facing)
         front_dir = dirs[idx]
@@ -56,25 +63,31 @@ class ModelBasedAgent:
         if percept.get('food_here'):
             action = 'suck'
         elif percept.get('wall_ahead'):
-            left_visited = (left_cell in self.visited_cells or left_cell in self.known_walls)
-            right_visited = (right_cell in self.visited_cells or right_cell in self.known_walls)
-            if left_visited and not right_visited:
-                action = 'turn_right'
-            else:
+            left_count = self.get_visit_count(left_cell)
+            right_count = self.get_visit_count(right_cell)
+            if left_count < right_count:
                 action = 'turn_left'
+            else:
+                action = 'turn_right'
         else:
-            front_visited = (front_cell in self.visited_cells)
-            left_visited = (left_cell in self.visited_cells or left_cell in self.known_walls)
-            right_visited = (right_cell in self.visited_cells or right_cell in self.known_walls)
+            front_count = self.get_visit_count(front_cell)
+            left_count = self.get_visit_count(left_cell)
+            right_count = self.get_visit_count(right_cell)
 
-            if not front_visited:
+            if front_count == 0:
                 action = 'move_forward'
-            elif not left_visited:
+            elif left_count == 0:
                 action = 'turn_left'
-            elif not right_visited:
+            elif right_count == 0:
                 action = 'turn_right'
             else:
-                action = 'move_forward'
+                min_count = min(front_count, left_count, right_count)
+                if min_count == front_count:
+                    action = 'move_forward'
+                elif min_count == left_count:
+                    action = 'turn_left'
+                else:
+                    action = 'turn_right'
 
         self.last_action = action
         return action
