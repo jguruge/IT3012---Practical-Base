@@ -1,20 +1,24 @@
-# simulator.py
-import random
 from grid_game import GridHuntGame
-from agent import GreedyGridAgent
+from agent import ModelBasedAgent#Lab02
 
 def run_grid_hunt():
     env = GridHuntGame()
-    agent = GreedyGridAgent()
+    agent = ModelBasedAgent()#Lab02
 
-    print("=== UC Berkeley Style Small Grid Hunt Started ===")
+    print("=== Model-Based Agent Simulation Started ===")
+
     while not env.is_done():
         percept = env.get_percept(agent)
         action = agent.sense_and_act(percept)
-        print(f"  Smells Food: {percept['smells_food']}")
-        print(f"  Smells Toxin: {percept['smells_toxin']}")  # STEP 2.2
+
+        print(f"Wall Ahead: {percept['wall_ahead']}")
+        print(f"Food Here: {percept['food_here']}")
+        print(f"Action: {action}")
+
         env.execute_action(agent, action)
-        print(f"Pos: {percept['agent_pos']} | Food Left: {percept['remaining_food']} | Score: {percept['score']}")
+
+        print(f"Score: {env.score} | Steps: {env.steps}")
+        print("--------------------")
 
     print(f"\nGame Over! Final Score: {env.score} after {env.steps} steps.")
 

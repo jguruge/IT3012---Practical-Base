@@ -20,14 +20,18 @@ class GridHuntGame:
         self.score = 0
         self.steps = 0
 
+    #Lab 02
     def get_percept(self, agent) -> dict:
+        x, y = self.agent_pos
+
+        wall_ahead = (
+            (x + 1, y) in self.walls
+            or x + 1 >= self.width
+        )
+
         return {
-            'agent_pos': list(self.agent_pos),
-            'smells_food': tuple(self.agent_pos) in self.food_positions,
-            'hit_wall': tuple(self.agent_pos) in self.walls,
-            'smells_toxin': tuple(self.agent_pos) in self.toxic_traps,  
-            'score': self.score,
-            'remaining_food': len(self.food_positions)
+            'wall_ahead': wall_ahead,
+            'food_here': tuple(self.agent_pos) in self.food_positions
         }
 
     def execute_action(self, agent, action: str):
