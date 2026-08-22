@@ -146,12 +146,16 @@ class VisualGridHuntGame:
 class GridGameGUI:
     """Tkinter wrapper that dynamically scales cell sizes to keep larger grids on screen."""
 
-    def __init__(self, root, width=10, height=10, num_food=12, num_opponents=2, walls=None):
+    def __init__(self, root, width=10, height=10, num_food=12, num_opponents=2, walls=None, agent=None):
         self.root = root
         self.root.title("IT3012 - Scalable Multi-Agent Grid Hunt with Toxic Traps")
 
         self.env = VisualGridHuntGame(width=width, height=height, num_food=num_food, num_opponents=num_opponents,
                                       custom_walls=walls)
+
+        # Inject SearchAgent instead of ModelBasedAgent
+        from agent import SearchAgent
+        self.agent = agent if agent is not None else SearchAgent()
 
         # Dynamically calculate cell size so the total canvas fits nicely within a 600x600 window ceiling
         max_canvas_dim = 600
@@ -226,8 +230,7 @@ class GridGameGUI:
 
     def run_loop(self):
         self.btn.config(state="disabled")
-        from agent import SearchAgent
-        agent = SearchAgent()
+        agent = self.agent
 
         def step():
             if not self.env.is_done():

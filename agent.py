@@ -1,6 +1,7 @@
 from collections import defaultdict
 from collections import deque
 import heapq
+import math
 from tracemalloc import start
 
 def bfs_search(graph, start):
@@ -155,8 +156,14 @@ class ModelBasedAgent:
 class SearchAgent:
     def __init__(self):
         self.plan = []
-        self.active_algo = 'BFS'
+        self.active_algo = 'AStar'
         self.current_pos = (0, 0)
+
+    def manhattan_distance(self, pos, goal):
+        return int(abs(pos[0] - goal[0]) + abs(pos[1] - goal[1]))
+
+    def euclidean_distance(self, pos, goal):
+        return float(math.sqrt((pos[0] - goal[0])**2 + (pos[1] - goal[1])**2))
 
     def sense_and_act(self, percept):
         if percept.get('food_here'):
@@ -181,6 +188,9 @@ class SearchAgent:
                     path = self.dfs_search(self.current_pos, food, walls, grid_size)
                 elif self.active_algo == 'UCS':
                     path = self.ucs_search(self.current_pos, food, walls, grid_size)
+                elif self.active_algo == 'AStar':
+                    remaining_food = percept.get('remaining_food', len(all_food))
+                    path = self.astar_search(self.current_pos, food, walls, grid_size, heuristic_type='manhattan')
                 
                 if path is not None and len(path) > 0:
                     self.plan = list(path)
@@ -323,3 +333,59 @@ class SearchAgent:
                             heapq.heappush(pq, (next_cost, counter, next_pos, path + [action]))
                             
         return None
+
+    def astar_search(self, start_pos, goal_pos, walls, grid_size, heuristic_type='manhattan'):
+        """
+        A* Search evaluates nodes by combining the path cost g(n) and the estimated cost to the goal h(n).
+        Evaluation function: f(n) = g(n) + h(n).
+        """
+        width, height = grid_size
+        walls_set = set(walls)
+        
+        if start_pos == goal_pos:
+            return []
+            
+        pq = []
+        if heuristic_type == 'manhattan':
+            h_start = self.manhattan_distance(start_pos, goal_pos)
+        else:
+            h_start = self.euclidean_distance(start_pos, goal_pos)
+            
+        heapq.heappush(pq, (h_start, 0, start_pos, []))
+        reached_states = set()
+        
+        directions = [
+            ('Up', (0, 1)),
+            ('Right', (1, 0)),
+            ('Down', (0, -1)),
+            ('Left', (-1, 0))
+        ]
+        
+        while pq:
+            f_cost, g_cost, curr, path = heapq.heappop(pq)
+            
+            if curr == goal_pos:
+                return path
+                
+            if curr in reached_states:
+                continue
+            reached_states.add(curr)
+            
+            for action, (dx, dy) in directions:
+                next_pos = (curr[0] + dx, curr[1] + dy)
+                if 0 <= next_pos[0] < width and 0 <= next_pos[1] < height:
+                    if next_pos not in walls_set and next_pos not in reached_states:
+                        g_new = g_cost + 1
+                        if heuristic_type == 'manhattan':
+                            h_new = self.manhattan_distance(next_pos, goal_pos)
+                        else:
+                            h_new = self.euclidean_distance(next_pos, goal_pos)
+                        f_new = g_new + h_new
+                        heapq.heappush(pq, (f_new, g_new, next_pos, path + [action]))
+                        
+        return None
+
+if __name__ == '__main__':
+    agent = SearchAgent()
+    print("Manhattan distance:", agent.manhattan_distance((0, 0), (3, 4)))
+    print("Euclidean distance:", agent.euclidean_distance((0, 0), (3, 4)))
